@@ -119,11 +119,11 @@ function createPiePath(points, isClockwise = true) {
   return pathData;
 }
 /**
- * @description: 通过坐标点，创建圆环 若是整圆，请使用fabric.Circle方法
+ * @description: 通过坐标点，创建圆环
  * @param {Array<{x:number,y:number}>} points 坐标点，第一个为圆心，第二个为起点，第三个为结束点
  * @param {Number} sectorWidth 圆环宽度
  * @param {Boolean} isClockwise 是否顺时针
- * @return {String} 返回path参数，可用fabric.Path直接生成对应图形
+ * @return {String} 返回path参数，可用fabric.Path直接生成对应图形 TODO: 若是整圆，请将fillRule设置为evenodd 否则会出现填充问题
  */
 function cretateCircularRingPath(points, sectorWidth = 1, isClockwise = true) {
   const outerRadius = calculateDistance(
@@ -141,14 +141,6 @@ function cretateCircularRingPath(points, sectorWidth = 1, isClockwise = true) {
     outerStart = points[2];
     outerEnd = points[1];
   }
-  const startAngle = Math.atan2(
-    outerStart.y - points[0].y,
-    outerStart.x - points[0].x
-  ); // 起始角度
-  const endAngle = Math.atan2(
-    outerEnd.y - points[0].y,
-    outerEnd.x - points[0].x
-  ); // 截止角度
   const innerStart = getInnerCircleCoordinates(
     points[0].x,
     points[0].y,
@@ -162,6 +154,20 @@ function cretateCircularRingPath(points, sectorWidth = 1, isClockwise = true) {
     outerEnd.x,
     outerEnd.y,
     sectorWidth
+  );
+  if (outerStart.x === outerEnd.x && outerStart.y === outerEnd.y) {
+    let pathData = `M ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 1 1 ${2 * points[0].x - outerStart.x} ${2 * points[0].y - outerStart.y} A ${outerRadius} ${outerRadius}  0 1 1 ${outerStart.x} ${outerStart.y} M ${innerStart.x} ${innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${ 2 * points[0].x - innerStart.x} ${ 2 * points[0].y - innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${innerStart.x} ${innerStart.y} Z`;
+    return pathData;
+  }
+  // 起始角度
+  const startAngle = Math.atan2(
+    outerStart.y - points[0].y,
+    outerStart.x - points[0].x
+  );
+  // 截止角度
+  const endAngle = Math.atan2(
+    outerEnd.y - points[0].y,
+    outerEnd.x - points[0].x
   );
   const pathData = `M ${outerStart.x} ${
     outerStart.y
@@ -190,7 +196,6 @@ function createFanshapedPath(points) {
   const end = points[2];
   const startAngle = Math.atan2(start.y - points[0].y, start.x - points[0].x); // 起始角度
   const endAngle = Math.atan2(end.y - points[0].y, end.x - points[0].x); // 截止角度
-  // "M 0 50 A 50 50 0 0 1 100 50";
   const pathData = `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${
     calculateClosureFlag(startAngle, endAngle) ? "1" : "0"
   } 1 ${end.x} ${end.y} Z`;
@@ -393,7 +398,7 @@ class CreatePolygonAndImageGroup {
     this.polygon = polygon;
     this.canvas = canvas;
     this.init();
-    this.bindBgImage(imageUrl)
+    this.bindBgImage(imageUrl);
   }
   /**
    * @description: 设置初始量，和事件绑定
@@ -410,9 +415,8 @@ class CreatePolygonAndImageGroup {
    * @description: 多边形的点击事件
    * @param {*}
    * @return {*}
-   */  
+   */
   polygonMousedown() {
-    console.log("isDbClick", this.isDbClick);
     // 模拟双击事件
     if (!this.isDbClick) {
       this.isDbClick = true;
@@ -421,7 +425,6 @@ class CreatePolygonAndImageGroup {
       }, 300);
       return;
     }
-    console.log("polygonMousedown");
     this.isDbClick = false;
     // 如果图片已经显示，则直接裁切
     if (this.image.visible) {
@@ -538,7 +541,7 @@ class CreatePolygonAndImageGroup {
    * @description: 删除多边形绑定的背景图片对象
    * @param {*}
    * @return {*}
-   */  
+   */
   deleteImageFun() {
     this.canvas.remove(this.image);
     this.polygon.off("mousedown", this.polygonMousedownBind);
@@ -547,8 +550,8 @@ class CreatePolygonAndImageGroup {
   /**
    * @description: 更改背景图片地址
    * @param {String} imageUrl 图片地址
-   * @return {*}
-   */  
+   * @return {ibject} 返回fabric.Image对象
+   */
   bindBgImage(imageUrl) {
     this.isDbClick = false;
     this.isPolygonInsideImage = true;
@@ -564,10 +567,10 @@ class CreatePolygonAndImageGroup {
     });
     // 绑定点击画布其他位置时，退出编辑状态
     this.boundMouseDown = this.mouseDown.bind(this);
-    this.canvas.on("mouse:down", this.boundMouseDown);
+    // this.canvas.on("mouse:down", this.boundMouseDown);
     this.polygon.off("mousedown", this.polygonMousedownBind);
     this.polygon.on("mousedown", this.polygonMousedownBind);
-    this.canvas.setActiveObject(this.polygon);
+    // this.canvas.setActiveObject(this.polygon);
     fabric.Image.fromURL(imageUrl, (image) => {
       image.top = this.polygon.top;
       image.left = this.polygon.left;
@@ -579,13 +582,14 @@ class CreatePolygonAndImageGroup {
       });
       this.canvas.add(image);
       this.canvas.add(this.polygon);
-      this.canvas.setActiveObject(this.polygon);
+      // this.canvas.setActiveObject(this.polygon);
       this.canvas.renderAll();
     });
     this.imagePosition = {
       offsetX: 0,
       offsetY: 0,
     };
+    return this.image;
   }
 }
 export {

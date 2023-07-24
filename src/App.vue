@@ -148,12 +148,13 @@ onMounted(() => {
   const circularRingPosints = [
     { x: 50, y: 50 },
     { x: 0, y: 50 },
-    { x: 50, y: 100 },
+    { x: 0, y: 50 },
   ]
   const circularRingPath = cretateCircularRingPath(circularRingPosints, 30)
   const circularRing = new fabric.Path(circularRingPath, {
     left: 400,
     top: 10,
+    fillRule: 'evenodd',
     fill: 'red',
   })
   canvas.add(circularRing)
@@ -181,7 +182,7 @@ onMounted(() => {
   // 绑定图片
   polygonAndImageGroup = new CreatePolygonAndImageGroup(
     canvas,
-    fanshaped,
+    circularRing,
     "https://www.vidnoz.com/img/index/index_man.png"
   )
   canvas.renderAll()
