@@ -192,7 +192,7 @@ onMounted(() => {
     fill: 'red',
   })
   // canvas.add(fanshaped)
-  // 绑定文本
+  // =========================绑定文本==================================
   const polygonAndTextGroup = new CreatePolygonAndTextGroup(
     canvas,
     polygon,
@@ -200,6 +200,9 @@ onMounted(() => {
       fontSize: 20,
     })
   )
+  // =========================绑定文本==================================
+
+  // =========================绑定图片 传入fabric.Image==================================
   // fabric.Image.fromURL("/index_man.png", image =>{
   //   polygonAndImageGroup = new CreatePolygonAndImageGroup(
   //     canvas,
@@ -207,15 +210,17 @@ onMounted(() => {
   //     image
   //   )
   // })
+  // =========================绑定图片传入地址==================================
   // 绑定图片
   // polygonAndImageGroup = new CreatePolygonAndImageGroup(
   //   canvas,
   //   circularRing,
-  //   "https://www.vidnoz.com/img/index/index_man.png"
+  //   "/index_man.png"
   // )
   canvas.renderAll()
 })
 function toJSONFun() {
+  // 绑定图片
   console.log(canvas.toJSON(['offsetX', 'offsetY']))
   localStorage.setItem('canvas', JSON.stringify(canvas.toJSON(['offsetX', 'offsetY'])))
   canvas.clear()
