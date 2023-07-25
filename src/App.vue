@@ -62,7 +62,7 @@ onMounted(() => {
     preserveObjectStacking: true,
   });
   canvas.renderOnAddRemove = false
-  return
+  // return
   // 多边形
   const polygonPath = createRoundedPolygonPath(polygonPoints, radius.value)
   polygon = new fabric.Path(polygonPath, {
@@ -218,6 +218,8 @@ onMounted(() => {
 function toJSONFun() {
   console.log(canvas.toJSON(['offsetX', 'offsetY']))
   localStorage.setItem('canvas', JSON.stringify(canvas.toJSON(['offsetX', 'offsetY'])))
+  canvas.clear()
+  canvas.renderAll()
 }
 function deleteImageFun() {
   polygonAndImageGroup.deleteImageFun()
