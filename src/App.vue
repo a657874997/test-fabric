@@ -2,6 +2,8 @@
   <div>
     <input type="number" v-model="radius" />
     <button @click="changeRadiusFun">修改圆角</button>
+    <button @click="toJSONFun">导出</button>
+    <button @click="loadFromJSONFun">导入</button>
     <canvas width="800" height="600" id="c" style="border: 1px solid #ccc;"></canvas>
     <button @click="deleteImageFun">删除背景</button>
     <button @click="changeImageFun">更换背景</button>
@@ -37,11 +39,30 @@ const polygonPoints = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ]
+function loadFromJSONFun() {
+  canvas.loadFromJSON(localStorage.getItem('canvas'), () => {
+    const objects = canvas.getObjects();
+    console.log(objects);
+    new CreatePolygonAndTextGroup(
+      canvas,
+      objects[0],
+      objects[1],
+    )
+    // new CreatePolygonAndImageGroup(
+    //   canvas,
+    //   objects[1],
+    //   objects[0],
+    //   true
+    // )
+    canvas.renderAll()
+  })
+}
 onMounted(() => {
   canvas = new fabric.Canvas('c', {
     preserveObjectStacking: true,
   });
   canvas.renderOnAddRemove = false
+  return
   // 多边形
   const polygonPath = createRoundedPolygonPath(polygonPoints, radius.value)
   polygon = new fabric.Path(polygonPath, {
@@ -49,7 +70,7 @@ onMounted(() => {
     top: 10,
     fill: 'red',
   })
-  canvas.add(polygon)
+  // canvas.add(polygon)
   // 五角星
   const starPoints = [
     { x: 100, y: 0 },
@@ -69,7 +90,7 @@ onMounted(() => {
     top: 10,
     fill: 'red',
   })
-  canvas.add(star)
+  // canvas.add(star)
   // 六边形
   const hexagonPoints = [
     { x: 100, y: 0 },
@@ -85,7 +106,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(hexagon)
+  // canvas.add(hexagon)
   // 平行四边形
   const parallelogramPoints = [
     { x: 50, y: 0 },
@@ -99,7 +120,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(parallelogram)
+  // canvas.add(parallelogram)
   // 梯形
   const trapezoidPoints = [
     { x: 50, y: 0 },
@@ -113,7 +134,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(trapezoid)
+  // canvas.add(trapezoid)
   // 箭头
   const arrowPoints = [
     { x: 0, y: -10 },
@@ -130,7 +151,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(arrow)
+  // canvas.add(arrow)
   // 饼图
   const piePoints = [
     { x: 50, y: 50 },
@@ -143,7 +164,7 @@ onMounted(() => {
     top: 10,
     fill: 'red',
   })
-  canvas.add(pie)
+  // canvas.add(pie)
   // 圆环
   const circularRingPosints = [
     { x: 50, y: 50 },
@@ -152,12 +173,12 @@ onMounted(() => {
   ]
   const circularRingPath = cretateCircularRingPath(circularRingPosints, 30)
   const circularRing = new fabric.Path(circularRingPath, {
-    left: 400,
-    top: 10,
+    left: 300,
+    top: 200,
     fillRule: 'evenodd',
     fill: 'red',
   })
-  canvas.add(circularRing)
+  // canvas.add(circularRing)
   // 扇形
   const fanshapedPosints = [
     { x: 50, y: 50 },
@@ -170,7 +191,7 @@ onMounted(() => {
     top: 500,
     fill: 'red',
   })
-  canvas.add(fanshaped)
+  // canvas.add(fanshaped)
   // 绑定文本
   const polygonAndTextGroup = new CreatePolygonAndTextGroup(
     canvas,
@@ -179,19 +200,30 @@ onMounted(() => {
       fontSize: 20,
     })
   )
+  // fabric.Image.fromURL("/index_man.png", image =>{
+  //   polygonAndImageGroup = new CreatePolygonAndImageGroup(
+  //     canvas,
+  //     circularRing,
+  //     image
+  //   )
+  // })
   // 绑定图片
-  polygonAndImageGroup = new CreatePolygonAndImageGroup(
-    canvas,
-    circularRing,
-    "https://www.vidnoz.com/img/index/index_man.png"
-  )
+  // polygonAndImageGroup = new CreatePolygonAndImageGroup(
+  //   canvas,
+  //   circularRing,
+  //   "https://www.vidnoz.com/img/index/index_man.png"
+  // )
   canvas.renderAll()
 })
+function toJSONFun() {
+  console.log(canvas.toJSON(['offsetX', 'offsetY']))
+  localStorage.setItem('canvas', JSON.stringify(canvas.toJSON(['offsetX', 'offsetY'])))
+}
 function deleteImageFun() {
   polygonAndImageGroup.deleteImageFun()
 }
 function changeImageFun() {
-  polygonAndImageGroup.bindBgImage("https://www.vidnoz.com/img/index/index_women.png")
+  polygonAndImageGroup.bindBgImageUrl("https://www.vidnoz.com/img/index/index_women.png")
 }
 </script>
 <style scoped>

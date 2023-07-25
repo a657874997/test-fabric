@@ -156,7 +156,17 @@ function cretateCircularRingPath(points, sectorWidth = 1, isClockwise = true) {
     sectorWidth
   );
   if (outerStart.x === outerEnd.x && outerStart.y === outerEnd.y) {
-    let pathData = `M ${outerStart.x} ${outerStart.y} A ${outerRadius} ${outerRadius} 0 1 1 ${2 * points[0].x - outerStart.x} ${2 * points[0].y - outerStart.y} A ${outerRadius} ${outerRadius}  0 1 1 ${outerStart.x} ${outerStart.y} M ${innerStart.x} ${innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${ 2 * points[0].x - innerStart.x} ${ 2 * points[0].y - innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${innerStart.x} ${innerStart.y} Z`;
+    let pathData = `M ${outerStart.x} ${
+      outerStart.y
+    } A ${outerRadius} ${outerRadius} 0 1 1 ${2 * points[0].x - outerStart.x} ${
+      2 * points[0].y - outerStart.y
+    } A ${outerRadius} ${outerRadius}  0 1 1 ${outerStart.x} ${
+      outerStart.y
+    } M ${innerStart.x} ${innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${
+      2 * points[0].x - innerStart.x
+    } ${2 * points[0].y - innerStart.y} A ${innerRadius} ${innerRadius} 0 1 1 ${
+      innerStart.x
+    } ${innerStart.y} Z`;
     return pathData;
   }
   // 起始角度
@@ -255,9 +265,9 @@ function calculateDistance(x1, y1, x2, y2) {
 class CreatePolygonAndTextGroup {
   /**
    * @description: 为多边形添加文字
-   * @param {*} canvas fabric生成的canvas对象
-   * @param {*} polygon 多边形对象
-   * @param {*} text fabric的Textbox对象
+   * @param {fabric.Canvas} canvas fabric生成的canvas对象
+   * @param {fabric.polygon} polygon 多边形对象
+   * @param {fabric.Textbox} text fabric的Textbox对象
    * @return {*}
    */
   constructor(canvas, polygon, text) {
@@ -288,6 +298,8 @@ class CreatePolygonAndTextGroup {
       originY: "center",
       textAlign: "center",
     });
+    this.canvas.remove(this.polygon);
+    this.canvas.remove(this.text);
     this.canvas.add(this.polygon);
     this.canvas.add(this.text);
     this.updateText();
@@ -347,7 +359,7 @@ class CreatePolygonAndTextGroup {
   }
   /**
    * @description: 图形改变时，需要重新绑定事件
-   * @param {*}
+   * @param {fabric.polygon} fabric的polygon对象
    * @return {*}
    */
   changePolygon(polygon) {
@@ -389,16 +401,64 @@ class CreatePolygonAndTextGroup {
 class CreatePolygonAndImageGroup {
   /**
    * @description: 为多边形添加背景图
-   * @param {*} canvas fabric生成的canvas对象
-   * @param {*} polygon 多边形对象
-   * @param {*} imageUrl 图片地址
+   * @param {fabric.Canvas} canvas fabric生成的canvas对象
+   * @param {fabric.polygon} polygon 多边形对象
+   * @param {String|fabric.Image} image 图片地址 或者 fabric.Image对象
+   * @param {Boolean} isLoadFromJSON 是否是从json中加载的数据
    * @return {*}
    */
-  constructor(canvas, polygon, imageUrl) {
+  constructor(canvas, polygon, image, isLoadFromJSON = false) {
     this.polygon = polygon;
     this.canvas = canvas;
     this.init();
-    this.bindBgImage(imageUrl);
+    if (typeof image === "string") {
+      this.bindBgImageUrl(image);
+    } else {
+      this.bindBgImageObj(image, isLoadFromJSON);
+    }
+  }
+  /**
+   * @description: 绑定fabric.Image对象
+   * @param {Object} image fabric.Image对象
+   * @param {Boolean} isLoadFromJSON 是否是从json中加载的数据
+   * @return {*}
+   */  
+  bindBgImageObj(image, isLoadFromJSON) {
+    this.image = image;
+    // 绑定点击画布其他位置时，退出编辑状态
+    this.boundMouseDown = this.mouseDown.bind(this);
+    this.polygon.off("mousedown", this.polygonMousedownBind);
+    this.polygon.on("mousedown", this.polygonMousedownBind);
+    this.isDbClick = false;
+    if (isLoadFromJSON) {
+      this.isPolygonInsideImage = this.isPolygonInsideImageFun();
+    } else {
+      this.isPolygonInsideImage = true;
+      this.polygon.set({
+        lockScalingX: true,
+        lockScalingY: true,
+        hasControls: false,
+        originX: "center",
+        originY: "center",
+        fill: "transparent",
+        stroke: "black",
+      });
+      this.image.set({
+        originX: "center",
+        originY: "center",
+        left: this.polygon.left,
+        top: this.polygon.top,
+        offsetX: 0,
+        offsetY: 0,
+      });
+    }
+    this.canvas.remove(this.image);
+    this.canvas.remove(this.polygon);
+    this.canvas.add(this.image);
+    this.canvas.add(this.polygon);
+    this.canvas.renderAll();
+
+    return this.image;
   }
   /**
    * @description: 设置初始量，和事件绑定
@@ -435,12 +495,12 @@ class CreatePolygonAndImageGroup {
     let left = !this.isPolygonInsideImage
       ? this.polygon.left
       : this.polygon.left +
-        this.imagePosition.offsetX +
+        this.image.offsetX +
         (this.image.width - this.polygon.width) / 2;
     let top = !this.isPolygonInsideImage
       ? this.polygon.top
       : this.polygon.top +
-        this.imagePosition.offsetY +
+        this.image.offsetY +
         (this.image.height - this.polygon.height) / 2;
     this.image.set({
       left,
@@ -483,16 +543,14 @@ class CreatePolygonAndImageGroup {
    */
   cutImage() {
     // 计算和保存图片的偏移量
-    this.imagePosition = {
-      offsetX:
-        this.image.left -
-        this.polygon.left -
-        (this.image.width - this.polygon.width) / 2,
-      offsetY:
-        this.image.top -
-        this.polygon.top -
-        (this.image.height - this.polygon.height) / 2,
-    };
+    const offsetX =
+      this.image.left -
+      this.polygon.left -
+      (this.image.width - this.polygon.width) / 2;
+    const offsetY =
+      this.image.top -
+      this.polygon.top -
+      (this.image.height - this.polygon.height) / 2;
     const angle = fabric.util.degreesToRadians(this.image.angle);
     // 通过patternTransform设置图片的旋转和缩放
     var patternTransform = [1, 0, 0, 1, 0, 0]; // 初始值为单位矩阵
@@ -512,7 +570,8 @@ class CreatePolygonAndImageGroup {
       source: this.image.getElement(),
       repeat: "no-repeat",
       patternTransform,
-      ...this.imagePosition,
+      offsetX,
+      offsetY,
     });
     this.polygon.set({
       fill: pattern,
@@ -522,7 +581,10 @@ class CreatePolygonAndImageGroup {
       hasControls: true,
     });
     this.image.visible = false;
-    this.isPolygonInsideImage = this.isPolygonInsideImageFun();
+    this.image.offsetX = offsetX;
+    this.image.offsetY = offsetY;
+     this.isPolygonInsideImage =
+      this.isPolygonInsideImageFun();
     this.canvas.renderAll();
     // 结束后，删除绑定的事件
     this.canvas.off("mouse:down", this.boundMouseDown);
@@ -550,9 +612,9 @@ class CreatePolygonAndImageGroup {
   /**
    * @description: 更改背景图片地址
    * @param {String} imageUrl 图片地址
-   * @return {ibject} 返回fabric.Image对象
+   * @return {fabric.Image} 返回fabric.Image对象
    */
-  bindBgImage(imageUrl) {
+  bindBgImageUrl(imageUrl) {
     this.isDbClick = false;
     this.isPolygonInsideImage = true;
     this.polygon.set({
@@ -561,34 +623,29 @@ class CreatePolygonAndImageGroup {
       hasControls: false,
       originX: "center",
       originY: "center",
-      globalCompositeOperation: "source-over",
       fill: "transparent",
       stroke: "black",
     });
     // 绑定点击画布其他位置时，退出编辑状态
     this.boundMouseDown = this.mouseDown.bind(this);
-    // this.canvas.on("mouse:down", this.boundMouseDown);
     this.polygon.off("mousedown", this.polygonMousedownBind);
     this.polygon.on("mousedown", this.polygonMousedownBind);
-    // this.canvas.setActiveObject(this.polygon);
     fabric.Image.fromURL(imageUrl, (image) => {
       image.top = this.polygon.top;
       image.left = this.polygon.left;
       this.canvas.remove(this.image);
       this.image = image;
+      this.image.offsetX = 0;
+      this.image.offsetY = 0;
       this.image.set({
         originX: "center",
         originY: "center",
       });
       this.canvas.add(image);
+      this.canvas.remove(this.polygon);
       this.canvas.add(this.polygon);
-      // this.canvas.setActiveObject(this.polygon);
       this.canvas.renderAll();
     });
-    this.imagePosition = {
-      offsetX: 0,
-      offsetY: 0,
-    };
     return this.image;
   }
 }
