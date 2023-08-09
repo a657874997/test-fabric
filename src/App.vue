@@ -18,14 +18,23 @@ import {
   CreatePolygonAndTextGroup,
   CreatePolygonAndImageGroup
 } from './utils/polygonUtils'
+import {initRoundedPolygon} from "./utils/roundedPolygon"
 const radius = ref(0)
 let canvas
 let polygonAndImageGroup
 let polygon
-
+let roundedPolygon
 function changeRadiusFun() {
-  const newPolygonPath = createRoundedPolygonPath(polygonPoints, radius.value)
-  polygon.set({ path: new fabric.Path(newPolygonPath).path })
+  // const newPolygonPath = createRoundedPolygonPath(points, radius.value)
+  // polygon.set({ path: new fabric.Path(newPolygonPath).path })
+  // // polygon.dirty = true
+  // const dims = polygon._calcDimensions()
+  // polygon.set({ width: dims.width, height: dims.height })
+  // polygon.pathOffset.x = polygon.width/2;
+  // polygon.pathOffset.y = polygon.height/2;
+  // polygon.setCoords()
+  // canvas.renderAll()
+  roundedPolygon.set({radius: radius.value})
   canvas.renderAll()
 }
 
@@ -37,17 +46,49 @@ const polygonPoints = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ]
+const points =   [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }]
 onMounted(() => {
+  initRoundedPolygon()
   canvas = new fabric.Canvas('c', {
     preserveObjectStacking: true,
   });
   canvas.renderOnAddRemove = false
+  roundedPolygon = new fabric.RoundedPolygon({
+    points,
+    radius: 2,
+    fill: 'transparent',
+    stroke: 'red',
+    left: 200,
+    top: 200,
+  })
+  canvas.add(roundedPolygon)
+  canvas.renderAll()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // 多边形
   const polygonPath = createRoundedPolygonPath(polygonPoints, radius.value)
   polygon = new fabric.Path(polygonPath, {
     left: 10,
     top: 10,
-    fill: 'red',
+    stroke: 'red',
+    fill: 'transparent',
   })
   canvas.add(polygon)
   // 五角星
@@ -69,7 +110,7 @@ onMounted(() => {
     top: 10,
     fill: 'red',
   })
-  canvas.add(star)
+  // canvas.add(star)
   // 六边形
   const hexagonPoints = [
     { x: 100, y: 0 },
@@ -85,7 +126,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(hexagon)
+  // canvas.add(hexagon)
   // 平行四边形
   const parallelogramPoints = [
     { x: 50, y: 0 },
@@ -99,7 +140,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(parallelogram)
+  // canvas.add(parallelogram)
   // 梯形
   const trapezoidPoints = [
     { x: 50, y: 0 },
@@ -113,7 +154,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(trapezoid)
+  // canvas.add(trapezoid)
   // 箭头
   const arrowPoints = [
     { x: 0, y: -10 },
@@ -130,7 +171,7 @@ onMounted(() => {
     top: 200,
     fill: 'red',
   })
-  canvas.add(arrow)
+  // canvas.add(arrow)
   // 饼图
   const piePoints = [
     { x: 50, y: 50 },
@@ -143,7 +184,7 @@ onMounted(() => {
     top: 10,
     fill: 'red',
   })
-  canvas.add(pie)
+  // canvas.add(pie)
   // 圆环
   const circularRingPosints = [
     { x: 50, y: 50 },
@@ -157,7 +198,7 @@ onMounted(() => {
     fillRule: 'evenodd',
     fill: 'red',
   })
-  canvas.add(circularRing)
+  // canvas.add(circularRing)
   // 扇形
   const fanshapedPosints = [
     { x: 50, y: 50 },
@@ -170,21 +211,21 @@ onMounted(() => {
     top: 500,
     fill: 'red',
   })
-  canvas.add(fanshaped)
+  // canvas.add(fanshaped)
   // 绑定文本
-  const polygonAndTextGroup = new CreatePolygonAndTextGroup(
-    canvas,
-    polygon,
-    new fabric.Textbox('动态设置圆角', {
-      fontSize: 20,
-    })
-  )
+  // const polygonAndTextGroup = new CreatePolygonAndTextGroup(
+  //   canvas,
+  //   polygon,
+  //   new fabric.Textbox('动态设置圆角', {
+  //     fontSize: 20,
+  //   })
+  // )
   // 绑定图片
-  polygonAndImageGroup = new CreatePolygonAndImageGroup(
-    canvas,
-    circularRing,
-    "https://www.vidnoz.com/img/index/index_man.png"
-  )
+  // polygonAndImageGroup = new CreatePolygonAndImageGroup(
+  //   canvas,
+  //   circularRing,
+  //   "https://www.vidnoz.com/img/index/index_man.png"
+  // )
   canvas.renderAll()
 })
 function deleteImageFun() {
