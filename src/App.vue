@@ -5,6 +5,8 @@
     <canvas width="800" height="600" id="c" style="border: 1px solid #ccc;"></canvas>
     <button @click="deleteImageFun">删除背景</button>
     <button @click="changeImageFun">更换背景</button>
+    <button @click="toObjectFun">导出</button>
+    <button @click="fromObjectFun">导入</button>
   </div>
 </template>
 <script setup>
@@ -18,12 +20,14 @@ import {
   CreatePolygonAndTextGroup,
   CreatePolygonAndImageGroup
 } from './utils/polygonUtils'
-import {initRoundedPolygon} from "./utils/roundedPolygon"
+import { initRoundedPolygon } from "./utils/roundedPolygon"
+import { initCustomGroup } from './utils/CustomGroup'
 const radius = ref(0)
 let canvas
 let polygonAndImageGroup
 let polygon
 let roundedPolygon
+let customGroup
 function changeRadiusFun() {
   // const newPolygonPath = createRoundedPolygonPath(points, radius.value)
   // polygon.set({ path: new fabric.Path(newPolygonPath).path })
@@ -34,8 +38,35 @@ function changeRadiusFun() {
   // polygon.pathOffset.y = polygon.height/2;
   // polygon.setCoords()
   // canvas.renderAll()
-  roundedPolygon.set({radius: radius.value})
+  roundedPolygon.set({ radius: radius.value })
   canvas.renderAll()
+}
+function toObjectFun() {
+  console.log(customGroup);
+  const json = customGroup.toJSON()
+  console.log(json)
+  localStorage.setItem('json', JSON.stringify(json))
+  canvas.clear()
+  canvas.renderAll()
+}
+function fromObjectFun() {
+  const json = JSON.parse(localStorage.getItem('json'))
+  console.log(json);
+  // canvas.loadFromJSON(json, () => {
+  //   console.log("加载完成");
+  //   canvas.renderAll()
+  // })
+  fabric.CustomGroup.fromObject(json, (newCustomGroup) => {
+    console.log("加载完成");
+    customGroup = newCustomGroup
+    canvas.add(customGroup)
+    requestAnimationFrame(() => {
+      canvas.renderAll();
+    });
+    setTimeout(() => {
+      canvas.renderAll();
+    }, 500);
+  })
 }
 
 // 多边形
@@ -46,24 +77,45 @@ const polygonPoints = [
   { x: 100, y: 100 },
   { x: 0, y: 100 },
 ]
-const points =   [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }]
+const points = polygonPoints || [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }]
 onMounted(() => {
   initRoundedPolygon()
+  initCustomGroup()
   canvas = new fabric.Canvas('c', {
     preserveObjectStacking: true,
   });
   canvas.renderOnAddRemove = false
+  // return
   roundedPolygon = new fabric.RoundedPolygon({
     points,
     radius: 2,
-    fill: 'transparent',
+    fill: 'red',
     stroke: 'red',
-    left: 200,
-    top: 200,
+    left: 0,
+    top: 0,
   })
-  canvas.add(roundedPolygon)
+  const testText = new fabric.Textbox('测试文本', {
+    fill: 'black',
+    fontSize: 20,
+  })
+  const rect = new fabric.Rect({
+    width: 100,
+    height: 100,
+    fill: 'red',
+    left: 0,
+    top: 0,
+  })
+  let text = new fabric.Textbox('双击编辑文字', {
+    fill: 'black',
+    fontSize: 20,
+  })
+  customGroup = new fabric.CustomGroup(roundedPolygon, text)
+  // canvas.add(rect)
+  // canvas.add(text)
+  // canvas.add(roundedPolygon)
+  canvas.add(customGroup)
+  // canvas.add(testText)
   canvas.renderAll()
-
 
 
 
@@ -90,7 +142,7 @@ onMounted(() => {
     stroke: 'red',
     fill: 'transparent',
   })
-  canvas.add(polygon)
+  // canvas.add(polygon)
   // 五角星
   const starPoints = [
     { x: 100, y: 0 },

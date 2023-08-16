@@ -95,7 +95,6 @@ function isTransformCentered(transform) {
 }
 
 function scaleObject(eventData, transform, x, y, options) {
-    console.log("options", options);
     options = options || {}
     const target = transform.target
     const lockScalingX = target.lockScalingX
@@ -434,7 +433,18 @@ export const initRoundedPolygon = () => {
             return this;
         },
         toObject: function (propertiesToInclude) {
-            return this.callSuper('toObject', propertiesToInclude)
+            const tmpPropertiesToInclude = propertiesToInclude || []
+            return this.callSuper('toObject', [
+                'radius',
+                'points',
+                'startWidth',
+                'startHeight',
+                'rotatedMovementX_1',
+                'rotatedMovementX_2',
+                'rotatedMovementY_1',
+                'rotatedMovementY_2',
+                ...tmpPropertiesToInclude
+            ])
         },
         /**
          * @private
@@ -507,7 +517,6 @@ export const initRoundedPolygon = () => {
                     const mY = ratioH * eventData.movementY
                     // 计算旋转后的拖拽向量
                     const rotatedMovementX = mX * cosAngle + mY * sinAngle
-                    console.log('rotatedMovementX: ', rotatedMovementX);
                     if (target.width - rotatedMovementX >= 1) {
                         // 更新图像大小
                         let points = target.points;
@@ -519,10 +528,7 @@ export const initRoundedPolygon = () => {
                                 point.x = point.x + ((maxX - point.x) / xLength) * rotatedMovementX;
                             }
                         })
-                        console.log("=================================================");
-                        console.log(points);
                         const newPath = createRoundedPolygonPath(points, target.radius)
-                        console.log(newPath);
                         const path = new fabric.Path(newPath).path
                         target
                             .set({
@@ -756,7 +762,6 @@ export const initRoundedPolygon = () => {
 
     fabric.RoundedPolygon.generate = function (options) {
         const obj = new fabric.RoundedPolygon({
-            points,
             fill: 'transparent', // 设置填充为透明
             ...options
         })

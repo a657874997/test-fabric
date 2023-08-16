@@ -283,7 +283,6 @@ class CreatePolygonAndTextGroup {
       lockScalingX: true,
       lockScalingY: true,
       hasControls: false,
-      splitByGrapheme: true,
       originX: "center",
       originY: "center",
       textAlign: "center",
