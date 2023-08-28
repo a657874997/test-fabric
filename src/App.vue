@@ -12,6 +12,8 @@
 <script setup>
 import { fabric } from 'fabric'
 import { ref, onMounted } from 'vue'
+import { initShapeRect } from './utils/shape-rect'
+import { initShapeRectText } from './utils/shape-rect-text'
 import {
   createRoundedPolygonPath,
   createPiePath,
@@ -21,7 +23,8 @@ import {
   CreatePolygonAndImageGroup
 } from './utils/polygonUtils'
 import { initRoundedPolygon } from "./utils/roundedPolygon"
-import { initCustomGroup } from './utils/CustomGroup'
+import { initCustomGroup, createProxiedCustomGroup } from './utils/CustomGroup'
+import { initShapeRectTextGroup,initTextRect } from './utils/shape-rect-text-group'
 const radius = ref(0)
 let canvas
 let polygonAndImageGroup
@@ -43,7 +46,7 @@ function changeRadiusFun() {
 }
 function toObjectFun() {
   console.log(customGroup);
-  const json = customGroup.toJSON()
+  const json = canvas.toJSON()
   console.log(json)
   localStorage.setItem('json', JSON.stringify(json))
   canvas.clear()
@@ -52,21 +55,32 @@ function toObjectFun() {
 function fromObjectFun() {
   const json = JSON.parse(localStorage.getItem('json'))
   console.log(json);
-  // canvas.loadFromJSON(json, () => {
-  //   console.log("加载完成");
-  //   canvas.renderAll()
-  // })
-  fabric.CustomGroup.fromObject(json, (newCustomGroup) => {
+  canvas.loadFromJSON(json, () => {
     console.log("加载完成");
-    customGroup = newCustomGroup
-    canvas.add(customGroup)
-    requestAnimationFrame(() => {
-      canvas.renderAll();
-    });
-    setTimeout(() => {
-      canvas.renderAll();
-    }, 500);
+    canvas.renderAll()
   })
+  // fabric.ShapeRectText.fromObject(json, newCustomGroup =>{
+  //   console.log("加载完成");
+  //   customGroup = newCustomGroup
+  //   canvas.add(customGroup)
+  //   requestAnimationFrame(() => {
+  //     canvas.renderAll();
+  //   });
+  //   setTimeout(() => {
+  //     canvas.renderAll();
+  //   }, 0);
+  // })
+  // fabric.CustomGroup.fromObject(json, (newCustomGroup) => {
+  //   console.log("加载完成");
+  //   customGroup = newCustomGroup
+  //   canvas.add(customGroup)
+  //   requestAnimationFrame(() => {
+  //     canvas.renderAll();
+  //   });
+  //   setTimeout(() => {
+  //     canvas.renderAll();
+  //   }, 500);
+  // })
 }
 
 // 多边形
@@ -79,8 +93,12 @@ const polygonPoints = [
 ]
 const points = polygonPoints || [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }]
 onMounted(() => {
+  initShapeRect()
+  initShapeRectText()
   initRoundedPolygon()
   initCustomGroup()
+  initShapeRectTextGroup()
+  initTextRect()
   canvas = new fabric.Canvas('c', {
     preserveObjectStacking: true,
   });
@@ -109,11 +127,40 @@ onMounted(() => {
     fill: 'black',
     fontSize: 20,
   })
-  customGroup = new fabric.CustomGroup(roundedPolygon, text)
+  customGroup = new fabric.ShapeRectText({
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 100,
+    fill: 'red',
+    text: new fabric.Textbox('双击编辑文字', {
+      fill: 'black',
+      fontSize: 20,
+    }),
+  })
+  const testGroup = new fabric.ShapeRectTextGroup([
+  roundedPolygon, text
+  ])
+  const textRect = new fabric.TextRect({
+    left: 0,
+    top: 0,
+    width: 100,
+    height: 100,
+    fill: 'red',
+    text: "",
+  })
+  canvas.add(textRect)
+  window.textRect= textRect
+  // canvas.add(testGroup)
   // canvas.add(rect)
   // canvas.add(text)
   // canvas.add(roundedPolygon)
-  canvas.add(customGroup)
+  // canvas.add(customGroup)
+  // setTimeout(()=>{
+  //   console.log(customGroup);
+    // customGroup.set({ left: 10 })
+  //   canvas.renderAll()
+  // }, 1000)
   // canvas.add(testText)
   canvas.renderAll()
 
@@ -281,7 +328,10 @@ onMounted(() => {
   canvas.renderAll()
 })
 function deleteImageFun() {
-  polygonAndImageGroup.deleteImageFun()
+  console.log("删除");
+  canvas.remove(customGroup)
+  canvas.renderAll()
+  // polygonAndImageGroup.deleteImageFun()
 }
 function changeImageFun() {
   polygonAndImageGroup.bindBgImage("https://www.vidnoz.com/img/index/index_women.png")
